@@ -44,7 +44,7 @@ defmodule Nerves.IO.PN532.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger, :nerves_uart]]
+    [applications: [:logger, :circuits_uart]]
   end
 
   # Dependencies can be Hex packages:
@@ -57,7 +57,7 @@ defmodule Nerves.IO.PN532.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:nerves_uart, "~> 1.2.0"},
+    [{:circuits_uart, "~> 1.3"},
      {:earmark, ">= 1.0.1", only: :dev},
      {:ex_doc, "~> 0.13", only: :dev}]
   end

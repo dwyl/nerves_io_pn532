@@ -99,7 +99,7 @@ defmodule Nerves.IO.PN532.Base do
       # GenServer
 
       def init(_) do
-        {:ok, pid} = Nerves.UART.start_link
+        {:ok, pid} = Circuits.UART.start_link
         send(self(), :setup)
         {:ok, %{
                   uart_pid: pid,
@@ -111,11 +111,11 @@ defmodule Nerves.IO.PN532.Base do
               }}
       end
 
-      defp write_bytes(pid, bytes), do: Nerves.UART.write(pid, bytes)
+      defp write_bytes(pid, bytes), do: Circuits.UART.write(pid, bytes)
 
       defp wakeup(%{uart_pid: uart_pid, power_mode: :low_v_bat}) do
-        Nerves.UART.write(uart_pid, @wakeup_preamble)
-        Nerves.UART.write(uart_pid, @sam_mode_normal)
+        Circuits.UART.write(uart_pid, @wakeup_preamble)
+        Circuits.UART.write(uart_pid, @sam_mode_normal)
         receive do
           ack -> Logger.debug("SAM ACK: #{inspect ack}")
         after
@@ -172,7 +172,7 @@ defmodule Nerves.IO.PN532.Base do
         write_bytes(uart_pid, in_list_passive_target_command)
 
         receive do
-          {:nerves_uart, com_port, <<0xD5, 0x4B, total_cards::signed-integer, rest::binary>>} ->
+          {:circuits_uart, com_port, <<0xD5, 0x4B, total_cards::signed-integer, rest::binary>>} ->
             handle_detection(total_cards, rest)
         after
           @read_timeout ->
@@ -190,7 +190,7 @@ defmodule Nerves.IO.PN532.Base do
       end
 
       def handle_call({:open, com_port, uart_speed}, _from, state = %{uart_pid: uart_pid}) do
-        with :ok <- Nerves.UART.open(uart_pid, com_port, speed: uart_speed, active: true, framing: Nerves.IO.PN532.UART.Framing) do
+        with :ok <- Circuits.UART.open(uart_pid, com_port, speed: uart_speed, active: true, framing: Nerves.IO.PN532.UART.Framing) do
           {:reply, :ok, %{state | uart_open: true}}
         else
           error ->
@@ -204,7 +204,7 @@ defmodule Nerves.IO.PN532.Base do
       end
 
       def handle_call(:close, _from, state = %{uart_pid: uart_pid}) do
-        response = Nerves.UART.close(uart_pid)
+        response = Circuits.UART.close(uart_pid)
         {:reply, response, %{state | uart_open: false}}
       end
 
@@ -215,7 +215,7 @@ defmodule Nerves.IO.PN532.Base do
         write_bytes(uart_pid, firmware_version_command)
         response =
           receive do
-            {:nerves_uart, com_port, firmware_version_response(ic_version, version, revision, support)} ->
+            {:circuits_uart, com_port, firmware_version_response(ic_version, version, revision, support)} ->
               Logger.debug("Received firmware version frame on #{inspect com_port} with version: #{inspect version}.#{inspect revision}.#{inspect support}")
               {:ok, %{ic_version: ic_version, version: version, revision: revision, support: support}}
           after
@@ -238,21 +238,21 @@ defmodule Nerves.IO.PN532.Base do
 
             receive do
               # wait for ACK message
-              {:nerves_uart, com_port, @ack_frame} ->
+              {:circuits_uart, com_port, @ack_frame} ->
                 receive do
                   # wait for success message
-                  {:nerves_uart, com_port, <<0xD5, 0x11>>} ->
+                  {:circuits_uart, com_port, <<0xD5, 0x11>>} ->
                     # send ACK frame to let the PN532 know we are ready to change
                     write_bytes(uart_pid, <<0x00, 0x00, 0xFF, @ack_frame, 0x00>>)
                     # sleep for 20ms
                     Process.sleep(20)
                     # change baud rate of UART
-                    with :ok <- Nerves.UART.configure(uart_pid, speed: baud_rate) do
+                    with :ok <- Circuits.UART.configure(uart_pid, speed: baud_rate) do
                       {:ok, baud_rate}
                     else
                       error -> error
                     end
-                  {:nerves_uart, com_port, <<0xD5, 0x11, status>>} ->
+                  {:circuits_uart, com_port, <<0xD5, 0x11, status>>} ->
                     error =  get_error(status)
                     {:error, error}
                 after
@@ -277,11 +277,11 @@ defmodule Nerves.IO.PN532.Base do
         response =
           receive do
             # Data exchange was successful, this is returned on successful authentication
-            {:nerves_uart, com_port, <<0xD5, 0x41, 0>>} -> :ok
+            {:circuits_uart, com_port, <<0xD5, 0x41, 0>>} -> :ok
             # Data exchange was successful, with resulting data
-            {:nerves_uart, com_port, <<0xD5, 0x41, 0, rest::binary>>} -> {:ok, rest}
+            {:circuits_uart, com_port, <<0xD5, 0x41, 0, rest::binary>>} -> {:ok, rest}
             # Error happened
-            {:nerves_uart, com_port, <<0xD5, 0x41, status>>} ->
+            {:circuits_uart, com_port, <<0xD5, 0x41, status>>} ->
               error =  get_error(status)
               {:error, error}
           after
@@ -353,17 +353,17 @@ defmodule Nerves.IO.PN532.Base do
         {:noreply, %{new_state | power_mode: new_power_mode, detection_ref: detection_ref}}
       end
 
-      def handle_info({:nerves_uart, com_port, <<0x7F>>}, state) do
+      def handle_info({:circuits_uart, com_port, <<0x7F>>}, state) do
         Logger.error("Received Error frame on #{inspect com_port}")
         {:noreply, state}
       end
 
-      def handle_info({:nerves_uart, com_port, @ack_frame}, state) do
+      def handle_info({:circuits_uart, com_port, @ack_frame}, state) do
         Logger.debug("Received ACK frame on #{inspect com_port}")
         {:noreply, state}
       end
 
-      def handle_info({:nerves_uart, com_port, @nack_frame}, state) do
+      def handle_info({:circuits_uart, com_port, @nack_frame}, state) do
         Logger.debug("Received NACK frame on #{inspect com_port}")
         {:noreply, state}
       end

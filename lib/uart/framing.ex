@@ -1,5 +1,5 @@
 defmodule Nerves.IO.PN532.UART.Framing do
-  @behaviour Nerves.UART.Framing
+  @behaviour Circuits.UART.Framing
   import Nerves.IO.PN532.Frames
   require Nerves.IO.PN532.Frames
   require Logger

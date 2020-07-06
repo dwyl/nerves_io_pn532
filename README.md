@@ -4,27 +4,15 @@
 
 Any PN532 board should work as long as it supports UART, I've been using the following board to develop.
 
-[NFC/RFID PN532 breakout Module](http://www.elecfreaks.com/store/nfcrfid-breakout-module-p-519.html)
-
-[![NFC/RFID PN532 breakout Module](http://www.elecfreaks.com/store/images/NFC-Module.jpg "NFC/RFID PN532 breakout Module")](http://www.elecfreaks.com/store/nfcrfid-breakout-module-p-519.html "RFID PN532 breakout Module")
-
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
+This version is best pulled from git: 
 
   1. Add `nerves_io_pn532` to your list of dependencies in `mix.exs`:
 
     ```elixir
     def deps do
-      [{:nerves_io_pn532, "~> 0.1.0"}]
-    end
-    ```
-
-  2. Ensure `nerves_io_pn532` is started before your application:
-
-    ```elixir
-    def application do
-      [applications: [:nerves_io_pn532]]
+      [{:nerves_io_pn532, git: "https://github.com/th0mas/nerves_io_pn532"}]
     end
     ```
 
@@ -34,11 +22,11 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 defmodule MifareClientImplementation do
   use Nerves.IO.PN532.MifareClient
 
-  def card_detected(card = %{tg: target_number, sens_res: sens_res, sel_res: sel_res, nfcid: identifier}) do
+  def handle_event(:card_detected, card = %{tg: target_number, sens_res: sens_res, sel_res: sel_res, nfcid: identifier}) do
     Logger.info("Detected new Mifare card with ID: #{Base.encode16(identifier)}")
   end
 
-  def card_lost(card = %{tg: target_number, sens_res: sens_res, sel_res: sel_res, nfcid: identifier}) do
+  def handle_event(:card_lost, card = %{tg: target_number, sens_res: sens_res, sel_res: sel_res, nfcid: identifier}) do
     Logger.info("Lost connection with Mifare card with ID: #{Base.encode16(identifier)}")
   end
 end
