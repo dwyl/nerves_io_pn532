@@ -12,7 +12,7 @@ This version is best pulled from git:
 
     ```elixir
     def deps do
-      [{:nerves_io_pn532, git: "https://github.com/th0mas/nerves_io_pn532"}]
+      [{:nerves_io_pn532, git: "https://github.com/dwyl/nerves_io_pn532"}]
     end
     ```
 
