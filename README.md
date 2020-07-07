@@ -10,11 +10,11 @@ This version is best pulled from git:
 
   1. Add `nerves_io_pn532` to your list of dependencies in `mix.exs`:
 
-    ```elixir
-    def deps do
-      [{:nerves_io_pn532, git: "https://github.com/th0mas/nerves_io_pn532"}]
-    end
-    ```
+   ```elixir
+   def deps do
+    [{:nerves_io_pn532, git: "https://github.com/dwyl/nerves_io_pn532"}]
+   end
+   ```
 
 ## How to use
 
