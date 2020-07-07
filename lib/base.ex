@@ -1,4 +1,23 @@
 defmodule Nerves.IO.PN532.Base do
+  @moduledoc ~S"""
+  `Base` containts all the base methods for interacting with the PN532.
+  You should not use this directly, but instead use an implementation of
+  this, e.g. `Nerves.IO.PN532.MifareClient`
+
+  TODO: Move functions out of using
+
+  """
+
+  @doc ~S"""
+  Handle the detection of an object, e.g.
+
+      def handle_detection(1, iso_14443_type_a_target(target_number, sens_res, sel_res, identifier)) do
+        Logger.debug("Received Mifare card detection with ID: #{inspect Base.encode16(identifier)}")
+        {:ok, %{tg: target_number, sens_res: sens_res, sel_res: sel_res, nfcid: identifier}}
+      end
+
+  TODO: Is this actually correct?
+  """
   @callback handle_detection(integer, binary) :: {:ok, term} | {:error, term}
   @callback setup(pid, map) :: :ok
   @callback handle_event(any, any) :: :ok | {:error, any}
@@ -27,21 +46,36 @@ defmodule Nerves.IO.PN532.Base do
         GenServer.start_link(__MODULE__, [], opts)
       end
 
+      @doc """
+      Opens a UART port that sends messages to the current PID.
+
+      Default `uart_speed` is set to 115, 200 (this seems to work).
+
+      """
       @spec open(pid, String.t, [pos_integer]) :: :ok | {:error, :already_open} | {:error, term}
       def open(pid, com_port, uart_speed \\ 115_200) do
         GenServer.call(pid, {:open, com_port, uart_speed})
       end
 
+      @doc """
+      Closes the UART port that the current process is listetning to.
+      """
       @spec close(pid) :: :ok | {:error, :not_open}
       def close(pid) do
         GenServer.call(pid, :close)
       end
 
+      @doc """
+      Returns the card that is currently touched to the reader.
+      """
       @spec get_current_card(pid) :: {:ok, map} | {:error, term}
       def get_current_card(pid) do
         GenServer.call(pid, :get_current_card)
       end
 
+      @doc """
+      ?? Not sure yet.
+      """
       def in_data_exchange(pid, device_id, cmd, addr, data) do
         GenServer.call(pid, {:in_data_exchange, device_id, cmd, <<addr, data>>})
       end
@@ -50,6 +84,9 @@ defmodule Nerves.IO.PN532.Base do
         GenServer.call(pid, {:in_data_exchange, device_id, cmd, data})
       end
 
+      @doc """
+      Returns the firmware version of the PN532 board.
+      """
       def get_firmware_version(pid) do
         GenServer.call(pid, :get_firmware_version)
       end

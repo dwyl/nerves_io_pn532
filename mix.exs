@@ -13,7 +13,8 @@ defmodule Nerves.IO.PN532.Mixfile do
      start_permanent: Mix.env == :prod,
      description: description(),
      package: package(),
-     deps: deps()]
+     deps: deps(),
+     docs: docs()]
   end
 
   defp package do
@@ -34,6 +35,7 @@ defmodule Nerves.IO.PN532.Mixfile do
 
   def docs do
     [
+      name: "Nerves.IO.PN532",
       extras: ["README.md", "LICENSE.md"],
       source_ref: "v#{@version}",
       main: "readme"

@@ -25,10 +25,12 @@ defmodule Nerves.IO.PN532.UART.Framing do
     ]
   end
 
+  @impl true
   def init(_) do
     {:ok, %State{}}
   end
 
+  @impl true
   def add_framing(<<@preamble, @startcode1, @startcode2, @ack_frame, @postamble>> = command, state) do
     Logger.debug("About to send ACK: #{inspect command}")
     {:ok, command, state}
@@ -69,6 +71,7 @@ defmodule Nerves.IO.PN532.UART.Framing do
       0x00>>
   end
 
+  @impl true
   def remove_framing(data, state) do
     {new_processed, new_in_process, new_process_state, frames, new_frame_length} =
       process_data(state.processed, state.in_process <> data,
@@ -85,12 +88,14 @@ defmodule Nerves.IO.PN532.UART.Framing do
     {rc, frames, new_state}
   end
 
+  @impl true
   def frame_timeout(state) do
     partial_frame = {:partial, state.processed <> state.in_process}
     new_state = %{state | processed: <<>>, in_process: <<>>}
     {:ok, [partial_frame], new_state}
   end
 
+  @impl true
   def flush(direction, state) when direction == :receive or direction == :both do
     %{state | processed: <<>>, in_process: <<>>}
   end
@@ -191,8 +196,8 @@ defmodule Nerves.IO.PN532.UART.Framing do
     process_data(<<>>, rest, %{state | frame_state: :preamble, frames: [processed_frame | frames]})
   end
 
-  defp process_data(processed_frame, <<rubbish::binary-size(1), rest::binary>>, state) do
-    Logger.warn("Ignoring rubbish data: #{rubbish}")
+  defp process_data(processed_frame, <<_rubbish::binary-size(1), rest::binary>>, state) do
+    # Logger.warn("Ignoring rubbish data: #{rubbish}")
     process_data(processed_frame, rest, state)
   end
 
